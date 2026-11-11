@@ -129,7 +129,7 @@ const cam=new T.PerspectiveCamera(40,1,.1,200);
 /* ---------- lights ---------- */
 const hemi=new T.HemisphereLight(0xffffff,0x555555,.78); scene.add(hemi);
 const sun=new T.DirectionalLight(0xfff4e6,.8); sun.castShadow=true;
-sun.shadow.mapSize.set(1024,1024);
+sun.shadow.mapSize.set(2048,2048);
 const sc=sun.shadow.camera; sc.left=-3.5; sc.right=3.5; sc.top=3.5; sc.bottom=-3.5; sc.near=.5; sc.far=30;
 scene.add(sun); scene.add(sun.target);
 
@@ -184,12 +184,12 @@ function seg(parent,len,r1,r2,mat,pos){
   j.add(m,s); bone(j,len); return j;
 }
 function ell(parent,pos,rad,mat,noOl){
-  const m=new T.Mesh(new T.SphereGeometry(1,24,18),mat); m.position.set(pos[0],pos[1],pos[2]);
+  const m=new T.Mesh(new T.SphereGeometry(1,64,48),mat); m.position.set(pos[0],pos[1],pos[2]);
   m.scale.set(rad[0],rad[1],rad[2]); m.castShadow=!noOl; parent.add(m);
   if(!noOl) ol(m,.005/((rad[0]+rad[1]+rad[2])/3)); return m;
 }
 function cyl(parent,pos,r1,r2,h,mat,noOl){
-  const m=new T.Mesh(new T.CylinderGeometry(r1,r2,h,22),mat); m.position.set(pos[0],pos[1],pos[2]); m.castShadow=true; parent.add(m);
+  const m=new T.Mesh(new T.CylinderGeometry(r1,r2,h,64),mat); m.position.set(pos[0],pos[1],pos[2]); m.castShadow=true; parent.add(m);
   if(!noOl) ol(m); return m;
 }
 function box(parent,pos,size,mat,noOl){
@@ -200,18 +200,18 @@ function chain(parent,pos,n,len,R,mat,sx,sz){
   const js=[]; let p=parent, ps=pos; const th=.005/((sx+sz)/2);
   for(let i=0;i<n;i++){
     const j=new T.Group(); j.position.set(ps[0],ps[1],ps[2]); p.add(j);
-    const m=new T.Mesh(new T.CylinderGeometry(R[i],R[i+1],len,14),mat); m.position.y=-len/2; m.scale.set(sx,1,sz); m.castShadow=true; ol(m,th);
-    const s=new T.Mesh(new T.SphereGeometry(R[i],14,10),mat); s.scale.set(sx,.7,sz); s.castShadow=true; ol(s,th);
+    const m=new T.Mesh(new T.CylinderGeometry(R[i],R[i+1],len,40,2),mat); m.position.y=-len/2; m.scale.set(sx,1,sz); m.castShadow=true; ol(m,th);
+    const s=new T.Mesh(new T.SphereGeometry(R[i],40,28),mat); s.scale.set(sx,.7,sz); s.castShadow=true; ol(s,th);
     j.add(m,s); bone(j,len);
-    if(i===n-1){ const e=new T.Mesh(new T.SphereGeometry(R[n],12,8),mat); e.position.y=-len; e.scale.set(sx,1.6,sz); j.add(e); ol(e,th); }
+    if(i===n-1){ const e=new T.Mesh(new T.SphereGeometry(R[n],32,20),mat); e.position.y=-len; e.scale.set(sx,1.6,sz); j.add(e); ol(e,th); }
     js.push(j); p=j; ps=[0,-len,0];
   }
   return js;
 }
 
 function lathe(prof,seg){
-  const pts=new T.SplineCurve(prof.map(p=>new T.Vector2(p[0],p[1]))).getPoints(prof.length*6).map(v=>new T.Vector2(Math.max(v.x,.0005),v.y));
-  const g=new T.LatheGeometry(pts,seg||22), p=g.attributes.position, n=g.attributes.normal; let bi=0,br=0;
+  const pts=new T.SplineCurve(prof.map(p=>new T.Vector2(p[0],p[1]))).getPoints(prof.length*14).map(v=>new T.Vector2(Math.max(v.x,.0005),v.y));
+  const g=new T.LatheGeometry(pts,seg||64), p=g.attributes.position, n=g.attributes.normal; let bi=0,br=0;
   for(let i=0;i<p.count;i++){ const r=Math.hypot(p.getX(i),p.getZ(i)); if(r>br){br=r;bi=i;} }
   if(p.getX(bi)*n.getX(bi)+p.getZ(bi)*n.getZ(bi)<0){
     const ix=g.index; for(let i=0;i<ix.count;i+=3){ const b=ix.getX(i+1); ix.setX(i+1,ix.getX(i+2)); ix.setX(i+2,b); }
@@ -221,7 +221,7 @@ function lathe(prof,seg){
 }
 // a tapered, flattened strand that follows a curve: used for bangs, side locks, ribbon tails, trims
 function lock(pts,w,t,wd,root){
-  const cv=new T.CatmullRomCurve3(pts.map(p=>new T.Vector3(p[0],p[1],p[2]))), N=16, M=10, pos=[], idx=[];
+  const cv=new T.CatmullRomCurve3(pts.map(p=>new T.Vector3(p[0],p[1],p[2]))), N=40, M=20, pos=[], idx=[];
   const W=new T.Vector3(wd[0],wd[1],wd[2]), r0=root==null?.75:root;
   for(let i=0;i<=N;i++){
     const u=i/N, c=cv.getPoint(u), tg=cv.getTangent(u);
@@ -259,7 +259,7 @@ const gold=flat(0xd9b450);
 // pelvis + pleated skirt
 ell(root,[0,0,0],[.095,.085,.125],navy,true);
 function skirtGeo(t0,t1,k){
-  const g=new T.CylinderGeometry(1,1,1,84,6,true), p=g.attributes.position;
+  const g=new T.CylinderGeometry(1,1,1,280,16,true), p=g.attributes.position;
   for(let i=0;i<p.count;i++){
     const a=Math.atan2(p.getZ(i),p.getX(i)), t=t0+(.5-p.getY(i))*(t1-t0);
     const s=((a*14/(Math.PI*2))%1+1)%1;
@@ -271,7 +271,7 @@ function skirtGeo(t0,t1,k){
 const skirt=new T.Group(); root.add(skirt);
 mesh(skirt,skirtGeo(0,1,1),navy);
 mesh(skirt,skirtGeo(.8,.9,1.012),red,null,null,0);
-const under=new T.Mesh(new T.CircleGeometry(.238,28),lash); under.rotation.x=Math.PI/2; under.position.y=-.188; skirt.add(under);
+const under=new T.Mesh(new T.CircleGeometry(.238,64),lash); under.rotation.x=Math.PI/2; under.position.y=-.188; skirt.add(under);
 
 // legs
 const thighG=lathe([[.001,.012],[.058,0],[.07,-.06],[.068,-.18],[.058,-.3],[.05,-.38],[.047,-.4]]);
@@ -293,7 +293,7 @@ const legs=[];
 
 // torso
 const chest=new T.Group(); chest.position.set(0,.05,0); root.add(chest);
-mesh(chest,lathe([[.001,.348],[.05,.343],[.1,.328],[.135,.29],[.128,.22],[.108,.12],[.112,.06],[.121,.005],[.001,-.002]],28),navy,null,[.72,1,1]);
+mesh(chest,lathe([[.001,.348],[.05,.343],[.1,.328],[.135,.29],[.128,.22],[.108,.12],[.112,.06],[.121,.005],[.001,-.002]],72),navy,null,[.72,1,1]);
 ell(chest,[.05,.212,-.046],[.05,.05,.05],navy,true);
 ell(chest,[.05,.212,.046],[.05,.05,.05],navy,true);
 ell(chest,[.066,.215,0],[.034,.1,.032],white,true);             // blouse between the lapels
@@ -310,7 +310,7 @@ const nr=ell(chest,[.106,.29,.042],[.012,.024,.036],red); nr.rotation.x=.25;
 const ntail=[[.11,.28,.008],[.119,.23,.02],[.117,.165,.03]];
 strand(chest,ntail,.036,.01,[0,0,1],red,1); strand(chest,mir(ntail),.036,.01,[0,0,1],red,1);
 ell(chest,[.094,.13,.028],[.008,.008,.008],gold,true); ell(chest,[.096,.075,.028],[.008,.008,.008],gold,true);
-const trim=new T.Mesh(new T.TorusGeometry(.123,.006,8,32),white); trim.rotation.x=Math.PI/2;
+const trim=new T.Mesh(new T.TorusGeometry(.123,.006,16,96),white); trim.rotation.x=Math.PI/2;
 const trimG=new T.Group(); trimG.position.y=.012; trimG.scale.set(.72,1,1); trimG.add(trim); chest.add(trimG);
 cyl(chest,[0,.37,0],.03,.034,.08,skin,true);                     // neck
 
@@ -347,7 +347,7 @@ function faceDeform(g,k){
   return g;
 }
 const HS=[.106,.118,.104];
-mesh(head,faceDeform(new T.SphereGeometry(1,36,26),1),skin,[0,.1,0],HS);
+mesh(head,faceDeform(new T.SphereGeometry(1,96,72),1),skin,[0,.1,0],HS);
 // drawn face: eyes, brows, mouth, blush
 const faceTex=canvasTex(512,512,(g,W,H)=>{
   function eye(cx,cy,dir){
@@ -372,7 +372,7 @@ const faceTex=canvasTex(512,512,(g,W,H)=>{
   g.fillStyle='rgba(190,120,100,.55)'; g.beginPath(); g.ellipse(258,350,4,3,0,0,7); g.fill();
   g.strokeStyle='#8a3a3c'; g.lineWidth=4; g.lineCap='round'; g.beginPath(); g.moveTo(242,414); g.quadraticCurveTo(256,417,270,414); g.stroke();
 });
-const decal=new T.Mesh(faceDeform(new T.SphereGeometry(1,28,20,Math.PI-.95,1.9,.9,1.6),1.02),new T.MeshBasicMaterial({map:faceTex,transparent:true,depthWrite:false}));
+const decal=new T.Mesh(faceDeform(new T.SphereGeometry(1,64,48,Math.PI-.95,1.9,.9,1.6),1.02),new T.MeshBasicMaterial({map:faceTex,transparent:true,depthWrite:false}));
 decal.position.set(0,.1,0); decal.scale.set(HS[0],HS[1],HS[2]); head.add(decal); outlines.push(decal);
 // hair: cap with a shine band, bangs, side locks
 const capTex=canvasTex(512,256,(g,W,H)=>{
@@ -381,7 +381,7 @@ const capTex=canvasTex(512,256,(g,W,H)=>{
     for(let i=0;i<=32;i++){ const x=i/32*W, y=s[2]+(i%2?9:-7)+4*Math.sin(i*1.7); i?g.lineTo(x,y):g.moveTo(x,y); } g.stroke(); });
 });
 const capMat=new T.MeshToonMaterial({color:0xffffff,map:capTex,gradientMap:grad}); flesh.push(capMat);
-mesh(head,new T.SphereGeometry(1,32,22),capMat,[-.03,.12,0],[.125,.12,.124]);
+mesh(head,new T.SphereGeometry(1,96,64),capMat,[-.03,.12,0],[.125,.12,.124]);
 const Z=[0,0,1], X=[1,0,0];
 strand(head,[[.035,.226,0],[.11,.196,-.005],[.123,.152,-.008],[.119,.118,-.012]],.05,.02,Z,hairM);
 strand(head,[[.03,.225,-.02],[.105,.192,-.03],[.119,.145,-.036],[.114,.108,-.032]],.06,.02,Z,hairM);
@@ -396,7 +396,7 @@ strand(head,sideB,.075,.022,X,hairM); strand(head,mir(sideB),.075,.022,X,hairM);
 const c1=box(head,[.103,.166,-.07],[.008,.007,.036],red,true); c1.rotation.y=.5;
 const c2=box(head,[.103,.153,-.072],[.008,.007,.036],red,true); c2.rotation.y=.5;
 // ears
-const earG=lathe([[.001,.17],[.018,.14],[.04,.07],[.036,.01],[.001,-.01]],16);
+const earG=lathe([[.001,.17],[.018,.14],[.04,.07],[.036,.01],[.001,-.01]],48);
 const ears=[];
 [-.068,.068].forEach(z=>{
   const e=new T.Group(); e.position.set(-.025,.205,z); head.add(e);
@@ -410,10 +410,11 @@ ell(bow,[.032,.008,0],[.03,.021,.012],red); ell(bow,[-.032,.008,0],[.03,.021,.01
 strand(bow,[[.004,0,-.004],[.016,-.06,-.012],[.012,-.13,-.008]],.03,.006,X,red,1);
 strand(bow,[[-.004,0,-.004],[-.016,-.065,-.012],[-.02,-.145,-.006]],.03,.006,X,red,1);
 // long back hair and tail: several jointed strands each, so they fan and move separately
+const up2=a=>{ const o=[]; for(let i=0;i<a.length-1;i++) o.push(a[i],(a[i]+a[i+1])/2); o.push(a[a.length-1]); return o; };
 const hairChains=[[-.065,.07,.07],[0,0,.085],[.065,-.07,.07]].map(c=>{
-  const r=c[2], ch=chain(head,[-.085,.13,c[0]],6,.13,[r*.85,r,r,r*.95,r*.82,r*.6,.01],hairM,.5,1); ch.baseX=c[1]; return ch; });
+  const r=c[2], ch=chain(head,[-.085,.13,c[0]],12,.065,up2([r*.85,r,r,r*.95,r*.82,r*.6,.01]),hairM,.5,1); ch.baseX=c[1]; return ch; });
 const tailChains=[[0,0,1],[-.03,.1,.68],[.03,-.1,.68]].map(c=>{
-  const k=c[2], ch=chain(root,[-.11,.04,c[0]],6,.16*(k<1?.94:1),[.03*k,.055*k,.07*k,.075*k,.065*k,.045*k,.01],hairM,1,1); ch.baseX=c[1]; return ch; });
+  const k=c[2], ch=chain(root,[-.11,.04,c[0]],12,.08*(k<1?.94:1),up2([.03*k,.055*k,.07*k,.075*k,.065*k,.045*k,.01]),hairM,1,1); ch.baseX=c[1]; return ch; });
 const tb=tailChains[0][0];
 ell(tb,[0,-.075,0],[.047,.018,.047],red); ell(tb,[0,-.075,-.055],[.016,.022,.03],red); ell(tb,[0,-.075,.055],[.016,.022,.03],red);
 // x-ray extras
@@ -589,13 +590,13 @@ function frame(now){
   hairChains.forEach((ch,ci)=>ch.forEach((h,i)=>{
     const ph=ci*1.3;
     if(i===0){ h.rotation.z=-.04-sN*1.0-tuck*.3+.03*Math.sin(time*1.4+ph); h.rotation.x=ch.baseX+.03*Math.sin(time*1.1+ph)+turn*.2; }
-    else{ h.rotation.z=-sN*.05+(.03+.1*sN)*Math.sin(time*(2+9*sN)-i*.9+ph); h.rotation.x=(.03+.06*sN)*Math.sin(time*(1.1+7*sN)-i*.7+ph); }
+    else{ h.rotation.z=-sN*.025+(.015+.05*sN)*Math.sin(time*(2+9*sN)-i*.45+ph); h.rotation.x=(.015+.03*sN)*Math.sin(time*(1.1+7*sN)-i*.35+ph); }
   }));
-  const bend=[0,.3,.3,.25,.1,.05];
+  const bend=[0,.15,.15,.15,.15,.125,.125,.05,.05,.025,.025,0];
   tailChains.forEach((ch,ci)=>ch.forEach((t,i)=>{
     const ph=ci*1.7;
     if(i===0){ t.rotation.z=-(1.0+sN*.5)-tuck*.2+.05*Math.sin(time*2+ph); t.rotation.x=ch.baseX+.18*Math.sin(time*1.9)*(1-sN)+turn*.3; }
-    else{ t.rotation.z=bend[i]*(1-sN*.8)+(.03+.1*sN)*Math.sin(time*(2+10*sN)-i*.9+ph); t.rotation.x=(.1*(1-sN*.6)+.05*sN)*Math.sin(time*(1.9+6*sN)-i*.7+ph); }
+    else{ t.rotation.z=bend[i]*(1-sN*.8)+(.015+.05*sN)*Math.sin(time*(2+10*sN)-i*.45+ph); t.rotation.x=(.05*(1-sN*.6)+.025*sN)*Math.sin(time*(1.9+6*sN)-i*.35+ph); }
   }));
   skirt.scale.set(1+.1*sN+.03*c,1,1+.05*sN);
 
